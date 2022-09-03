@@ -11,7 +11,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v3.0.8
         with:
-           path: /
+           path: /tmp
            key: key
       - run: npm install -g bats
       - run: bats -v
