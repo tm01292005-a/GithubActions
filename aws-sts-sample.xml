@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="aws-sts-sampleFlow"
+		doc:id="18ae45fc-6bbd-4de9-8466-3831b034d564">
+		<scheduler doc:name="Scheduler"
+			doc:id="bd0efee7-aa82-4601-98cb-ea1a5dc90873">
+			<scheduling-strategy>
+				<fixed-frequency frequency="15" timeUnit="SECONDS" />
+			</scheduling-strategy>
+		</scheduler>
+		<java:invoke-static method="assumeRole(java.lang.String,java.lang.String,java.lang.String,java.lang.String)" doc:name="Invoke static" doc:id="656b45a1-d374-4359-968a-256995af0f2d" class="AwsAssumeRole">
+			<java:args ><![CDATA[#[{
+	"accessKeyId": "<>",
+	"secretAccessKey": "<>",
+	"roleArn": "arn:aws:iam::xxxxxxxxxxxx:role/service-role/xxx",
+	"roleSessionName": "STS"
+}]]]></java:args>
+		</java:invoke-static>
+		<ee:transform doc:name="Extract Credentials">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+var xmlString = payload as String
+---
+{
+    accessKeyId: (xmlString scan /<id>(.*?)<\/id>/)[0][1] default null,
+    secretAccessKey: (xmlString scan /<secret>(.*?)<\/secret>/)[0][1] default null,
+    sessionToken: (xmlString scan /<token>(.*?)<\/token>/)[0][1] default null
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+</mule>
